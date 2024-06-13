@@ -3,10 +3,21 @@ const express = require('express');
 const app = express();
 const morgan = require('morgan'); // npm package to log requests
 const cors = require ('cors');
+const mongoose = require('mongoose');
 
 // Import APIs
 const productRoutes = require('./api/routes/products');
 const orderRoutes = require('./api/routes/orders');
+
+// Connection to MongoDB
+mongoose.connect('mongodb+srv://21418661:S3cret@bellevueuniversity.feyswh3.mongodb.net/').then(
+  () => {
+    console.log('Database connected!');
+  },
+  (err) => {
+    console.log('MongoDB Error: ' + err.message);
+  }
+);
 
 // Incorporate morgan and bodyParser
 app.use(morgan('dev'));
