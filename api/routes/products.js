@@ -86,10 +86,34 @@ router.get('/:productId', async (req, res, next) => {
 
 
 
-router.patch('/:productId', (req, res, next) => {
-  res.status(200).json({
-    message: 'Updated product!'
-  })
+router.patch('/:productId', async (req, res, next) => {
+  try {
+    let id = req.params.productId;
+    let updateData = { ...req.body};
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const err = new Error('The ID you entered is not a valid Object ID');
+      err.status = 400;
+      console.log('err', err);
+      next(err);
+      return;
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!updatedProduct) {
+      const err = new Error('Product was not found')
+      err.status = 404;
+      console.log('err', err);
+      next(err);
+      return;
+    }
+
+    res.status(200).send(updatedProduct);
+  } catch (err) {
+    console.log('Error updating product:', err);
+    next(err);
+  }
 });
 
 router.delete('/:productId', async (req, res, next) => {
