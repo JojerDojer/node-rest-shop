@@ -21,6 +21,7 @@ mongoose.connect('mongodb+srv://21418661:S3cret@bellevueuniversity.feyswh3.mongo
 
 // Incorporate morgan and bodyParser
 app.use(morgan('dev'));
+app.use('/uploads', express.static('uploads'))
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors());
@@ -30,7 +31,7 @@ app.use('/products', productRoutes);
 app.use('/orders', orderRoutes)
 
 app.use((req, res, next) => {
-  const error = new Error('Not found');
+  const error = new Error('The route you are looking for does not exist.');
   error.status = 404;
   next(error);
 });

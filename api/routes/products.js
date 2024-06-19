@@ -3,6 +3,20 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const multer = require('multer'); // Import multer for handling file uploads
+
+// Configuring multer storage and file name.
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads')
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, uniqueSuffix + '-' + file.originalname)
+  }
+})
+
+const upload = multer({ storage: storage });
 
 const Product = require('../models/products'); // product model
 
@@ -27,24 +41,41 @@ router.get('/', async(req, res, next) => {
   }
 });
 
-router.post('/', (req, res, next) => {
-  const product = new Product({
-    name: req.body.name,
-    price: req.body.price
-  });
-  product.save().then(result => {
-    console.log(result);
+router.post('/', upload.single('productImage'), async (req, res, next) => {
+
+  try {
+
+    console.log(req.file);
+    const file = req.file; // store the requested file as a variable.
+
+    // Error handling to ensure the file type is image.
+    if (!file.mimetype.startsWith('image/')) {
+      const err = new Error('Invalid file type. The file must be an image');
+      err.status = 400;
+      console.log('err:', err);
+      next(err);
+      return;
+    }
+    // Create a new instance of a product document
+    const product = new Product({
+      name: req.body.name,
+      price: req.body.price,
+      productImage: req.file.path
+    });
+
+    // Save the new product to database
+    const savedProduct = await product.save();
+
+    // Respond with status code and product data
     res.status(201).json({
-      message: 'Created product successfully',
-      createdProduct: product
+      message: 'Created product Successfully',
+      createdProduct: savedProduct
     });
-  }).catch(err => {
-    console.log(err);
-    res.status(500).json({
-      message: 'A problem occurred!',
-      error: err
-    });
-  });
+
+  } catch (err) {
+    console.log('err:', err)
+    next(err);
+  }
 });
 
 // API for retrieving a specific productId
