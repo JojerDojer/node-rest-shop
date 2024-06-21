@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt'); // import bcrypt to hash password
+const jwt = require('jsonwebtoken'); // import json web token
+const JWT_SECRET = 'secr3t'; // Private key for JWT
 
 const User = require('../models/user');
 
@@ -75,6 +77,42 @@ router.post('/signup', async (req, res, next) => {
     next(err);
   }
 
+});
+
+// API endpoint to login a user
+router.post('/login', async (req, res, next) => {
+
+  const email = req.body.email;
+  try {
+    const user = await User.findOne({ email: email });
+
+    if (user) {
+      let passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
+
+      if (passwordIsValid) {
+        console.log('Login successful');
+
+        // JSON WEB TOKEN -- Code to be used once login is testable in frontend
+        // jwt.sign({
+        //   email: email,
+        //   id: req.body._id
+        // }, JWT_SECRET, {expiresIn: '1h'})
+
+        await user.save();
+
+        return res.status(200).json({ message: 'Login successful', user: user});
+      } else {
+        console.log('Invalid credentials');
+        return res.status(401).json({ status: 401, message: 'Invalid credentials'});
+      }
+    } else {
+      console.log('Invalid email');
+      return res.status(401).json({ status: 401, message: 'Invalid email'});
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 500, message: 'Internal Server Error', error: err});
+  }
 });
 
 // API endpoint to delete a user
